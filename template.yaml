@@ -37,6 +37,12 @@ Resources:
     Properties:
       CodeUri: functions/upload/
       Tracing: Active
+    Events:
+      S3Event:
+        Type: S3
+        Properties:
+          Bucket: !Ref StorageBucket
+          Events: s3:ObjectCreated:*
 
   # Dependencies
 
@@ -57,17 +63,38 @@ Resources:
       BucketName:
         Fn::Sub: delay-media-storage-${StageName}
 
+  # Event bus
+
+  DeleteSubscription:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Delete event subscription
+      EventBusName: !Ref EventBus
+      EventPattern:
+        source: [ "delay-media-lambda" ]
+        detail-type: [ "delay-media-delete"]
+      Name: DeleteSubscription
+      Targets:
+        - Arn: !GetAtt DeleteFunction.Arn
+          Id: DeleteFunction
+
+  UploadSubscription:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Upload event subscription
+      EventBusName: !Ref EventBus
+      EventPattern:
+        source: [ "delay-media-lambda" ]
+        detail-type: [ "delay-media-upload"]
+      Name: UploadSubscription
+      Targets:
+        - Arn: !GetAtt UploadFunction.Arn
+          Id: UploadFunction
 
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  HelloWorldApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
-  HelloWorldFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
-    Value: !GetAtt HelloWorldFunctionRole.Arn
+  DeleteFunction:
+    Description: "Delete Lambda Function ARN"
+    Value: !GetAtt DeleteFunction.Arn
+  UploadFunction:
+    Description: "Upload Lambda Function ARN"
+    Value: !GetAtt UploadFunction.Arn

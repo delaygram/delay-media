@@ -20,3 +20,14 @@ region = "eu-west-3"
 capabilities = "CAPABILITY_IAM"
 parameter_overrides = "StageName=\"prod\" EventBus=\"delaygram-event-bus-staging\""
 image_repositories = []
+
+[test]
+[test.deploy]
+[test.deploy.parameters]
+stack_name = "delay-media-test"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1js61lddvzyha"
+s3_prefix = "delay-media-test"
+region = "eu-west-3"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+image_repositories = []
