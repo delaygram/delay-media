@@ -7,7 +7,7 @@ s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1js61lddvzyha"
 s3_prefix = "delay-media-staging"
 region = "eu-west-3"
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "StageName=\"staging\" EventBus=\"delaygram-event-bus-staging\""
+parameter_overrides = "StageName=\"staging\" EventBus=\"delaygram-event-bus-staging\" AuthArn=\"VhJGi8jOl\""
 image_repositories = []
 
 [prod]
@@ -18,7 +18,7 @@ s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1js61lddvzyha"
 s3_prefix = "delay-media-prod"
 region = "eu-west-3"
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "StageName=\"prod\" EventBus=\"delaygram-event-bus-staging\""
+parameter_overrides = "StageName=\"prod\" EventBus=\"delaygram-event-bus-staging\" AuthArn=\"kak2I0gck\""
 image_repositories = []
 
 [test]

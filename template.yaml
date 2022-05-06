@@ -21,16 +21,59 @@ Parameters:
   EventBus:
     Type: String
     Default: default
+  AuthArn:
+    Type: String
+    Default: default
 
 Resources:
 
+  # Media API
+
+  MediaApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref StageName
+      EndpointConfiguration: REGIONAL
+      TracingEnabled: true
+      MethodSettings:
+        - ResourcePath: "/*"
+          HttpMethod: "*"
+          LoggingLevel: "INFO"
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: openapi.yaml
+      BinaryMediaTypes:
+        - 'multipart/form-data'
+      Auth:
+        DefaultAuthorizer: DelaygramAuthorizer
+        Authorizers:
+          DelaygramAuthorizer:
+            UserPoolArn:
+              Fn::Sub: arn:aws:cognito-idp:eu-west-3:088217417350:userpool/eu-west-3_${AuthArn}
+            Identity:
+              Header: token
+
+  # Media API Permissions
+
+  AllowMediaApiToInvokeUploadLambda:
+    Type: AWS::Lambda::Permission
+    DependsOn: UploadFunction
+    Properties:
+      FunctionName: !GetAtt UploadFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${MediaApi}/${StageName}/POST/media/upload
+
   # Functions
 
-  DeleteFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: functions/delete/
-      Tracing: Active
+#  DeleteFunction:
+#    Type: AWS::Serverless::Function
+#    Properties:
+#      CodeUri: functions/delete/
+#      Tracing: Active
 
   UploadFunction:
     Type: AWS::Serverless::Function
@@ -50,7 +93,7 @@ Resources:
     Type: AWS::Serverless::LayerVersion
     Properties:
       LayerName:
-        Fn::Sub: delay-media-dependencies${StageName}
+        Fn::Sub: delay-media-dependencies-${StageName}
       ContentUri: dependencies
     Metadata:
       BuildMethod: python3.9
@@ -65,36 +108,36 @@ Resources:
 
   # Event bus
 
-  DeleteSubscription:
-    Type: AWS::Events::Rule
-    Properties:
-      Description: Delete event subscription
-      EventBusName: !Ref EventBus
-      EventPattern:
-        source: [ "delay-media-lambda" ]
-        detail-type: [ "delay-media-delete"]
-      Name: DeleteSubscription
-      Targets:
-        - Arn: !GetAtt DeleteFunction.Arn
-          Id: DeleteFunction
-
-  UploadSubscription:
-    Type: AWS::Events::Rule
-    Properties:
-      Description: Upload event subscription
-      EventBusName: !Ref EventBus
-      EventPattern:
-        source: [ "delay-media-lambda" ]
-        detail-type: [ "delay-media-upload"]
-      Name: UploadSubscription
-      Targets:
-        - Arn: !GetAtt UploadFunction.Arn
-          Id: UploadFunction
+#  DeleteSubscription:
+#    Type: AWS::Events::Rule
+#    Properties:
+#      Description: Delete event subscription
+#      EventBusName: !Ref EventBus
+#      EventPattern:
+#        source: [ "delay-media-lambda" ]
+#        detail-type: [ "delay-media-delete"]
+#      Name: DeleteSubscription
+#      Targets:
+#        - Arn: !GetAtt DeleteFunction.Arn
+#          Id: DeleteFunction
+#
+#  UploadSubscription:
+#    Type: AWS::Events::Rule
+#    Properties:
+#      Description: Upload event subscription
+#      EventBusName: !Ref EventBus
+#      EventPattern:
+#        source: [ "delay-media-lambda" ]
+#        detail-type: [ "delay-media-upload"]
+#      Name: UploadSubscription
+#      Targets:
+#        - Arn: !GetAtt UploadFunction.Arn
+#          Id: UploadFunction
 
 Outputs:
-  DeleteFunction:
-    Description: "Delete Lambda Function ARN"
-    Value: !GetAtt DeleteFunction.Arn
+#  DeleteFunction:
+#    Description: "Delete Lambda Function ARN"
+#    Value: !GetAtt DeleteFunction.Arn
   UploadFunction:
     Description: "Upload Lambda Function ARN"
     Value: !GetAtt UploadFunction.Arn

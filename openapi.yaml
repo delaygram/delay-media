@@ -1,0 +1,49 @@
+openapi: 3.0.3
+info:
+  title: Delaygram Media API
+  version: 1.0.0
+
+servers:
+  - url: https://delaygram.nl/
+
+tags:
+  - name: Media
+    description: Media related endpoints
+
+paths:
+  /media/upload:
+    post:
+      tags:
+        - Media
+      parameters:
+        - in: header
+          name: token
+          schema:
+            type: string
+          required: true
+          description: User token
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+      responses:
+        '200':
+          $ref: '#/components/responses/MediaSuccess'
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        type: AWS_PROXY
+        uri:
+          Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UploadFunction.Arn}/invocations
+
+components:
+  responses:
+    MediaSuccess:
+      description: Media successfully uploaded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MediaSuccess'
+  schemas:
+    MediaSuccess:
+      type: object
